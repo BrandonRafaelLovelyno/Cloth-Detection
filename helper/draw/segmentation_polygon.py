@@ -1,6 +1,9 @@
 import torch
 from PIL import ImageDraw
-import json
+
+import sys
+sys.path.append('../')
+import annotation
 
 def make_polygon_tuples(polygon_tensor):
     polygon_tuples = [(polygon_tensor[i], polygon_tensor[i + 1]) for i in range(0, len(polygon_tensor), 2)]
@@ -20,16 +23,17 @@ def draw_item_polygons(image, polygons,color='white'):
 
     return image
 
-def draw_all_item_polygons(image, dir):
-    with open(dir) as f:
-        anno = json.load(f)
-    
-    for i,item_key in enumerate(anno.keys()):
-        item_value = anno[item_key]
-        if isinstance(item_value, dict) and 'segmentation' in item_value:
-            segmentation = item_value['segmentation']
-            
-            if isinstance(segmentation, list):
-                image = draw_item_polygons(image, segmentation,color='white' if i%2==0 else 'red')
+def check_two_dimensional_list(segmentation):
+    return all(isinstance(box, segmentation) for box in segmentation)
+
+def draw_all_item_polygons(image, path):
+    segmentation = annotation.extract_attributes('segmentation', path)
+
+    if isinstance(segmentation, list):
+        if check_two_dimensional_list(segmentation):
+            for i,polygon in enumerate(segmentation):
+                image = draw_item_polygons(image, polygon,color='white' if i == 0 else 'red')
+        elif len(segmentation) == 4:
+            image = draw_item_polygons(image, segmentation,color='white')
                 
     return image
