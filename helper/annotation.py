@@ -1,6 +1,8 @@
 import json
 
 def extract_attributes(key, path):
+    attributes = []
+    
     with open(path) as f:
         anno = json.load(f)
 
@@ -11,10 +13,11 @@ def extract_attributes(key, path):
             attribute = item_value[key]
         
             if isinstance(attribute, list):
-                return attribute
+                attributes.append(attribute)
             else:
                 if attribute is not None:
-                    return [attribute] 
+                    attributes.append(attribute)
                 else :
                     return None
-            
+    
+    return attributes
