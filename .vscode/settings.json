@@ -1,0 +1,7 @@
+{
+    "python.analysis.extraPaths": [
+        "./helper",
+        "./model",
+        "./model/template"
+    ]
+}
