@@ -15,7 +15,7 @@ class FasterRCNNResNet101(torch.nn.Module):
         
         self.model = FasterRCNN(
             backbone,
-            num_classes=20,  
+            num_classes=num_classes,  
             box_roi_pool=roi_pooler
         )
 

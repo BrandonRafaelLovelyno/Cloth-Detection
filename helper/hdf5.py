@@ -36,3 +36,21 @@ def get_list_dimension(data):
         return dimension
     return 0  
 
+def extract_attribute(h5f,number,attribute):
+    values = []
+    
+    group = h5f[number]
+    group_keys = list(group.keys())
+    item_numbers = [key for key in group_keys if key.startswith('item')]
+    
+    for item_number in item_numbers:
+        item_keys = list(group[item_number].keys())
+        
+        data_keys = [key for key in item_keys if key.startswith(attribute)]
+        for data_key in data_keys:
+            values.append(group[item_number][data_key][()])
+                
+    return values
+
+def create_id(index):
+    return f"{index:06d}"
