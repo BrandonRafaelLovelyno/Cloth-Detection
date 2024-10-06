@@ -39,8 +39,8 @@ def extract_attribute(anno,key):
 class DeepFashion2Dataset(torch.utils.data.Dataset):
     def __init__(self, lmdb_path, data_length = np.inf):
         self.env = lmdb.open(lmdb_path, readonly=True, lock=False, max_readers=8, readahead=False, meminit=False)
-        self.data_length = data_length
-        
+        self.txn = self.env.begin(write=False)
+        self.data_length = data_length        
 
     def __len__(self):
         return self.data_length
@@ -52,22 +52,19 @@ class DeepFashion2Dataset(torch.utils.data.Dataset):
     def __getitem__(self, index):        
         data_id = convert_index_to_id(index)
         image_key, annotation_key = f'image_{data_id}'.encode('utf-8'), f'annotation_{data_id}'.encode('utf-8')
+    
+        image_data = self.txn.get(image_key)
+        image_buffer = BytesIO(image_data)
+        image = Image.open(image_buffer).convert('RGB')
+        image_tensor = transform(image)
         
         
-        with self.env.begin(write=False) as txn:
-            # Load image
-            image_data = txn.get(image_key)
-            image_buffer = BytesIO(image_data)
-            image = Image.open(image_buffer).convert('RGB')
-            image_tensor = transform(image)
-            
-            
-            # Load annotation
-            annotation_data = txn.get(annotation_key)
-            annotation = json.loads(annotation_data.decode('utf-8'))
-            
-            bbox = extract_attribute(annotation, 'bounding_box')
-            labels = extract_attribute(annotation, 'category_id')
+        # Load annotation
+        annotation_data = self.txn.get(annotation_key)
+        annotation = json.loads(annotation_data.decode('utf-8'))
+        
+        bbox = extract_attribute(annotation, 'bounding_box')
+        labels = extract_attribute(annotation, 'category_id')
         
         bbox_arr = np.array(bbox,np.float32)
         labels_arr = np.array(labels,np.int64)
