@@ -37,20 +37,21 @@ def extract_attribute(anno,key):
     return attributes
 
 class DeepFashion2Dataset(torch.utils.data.Dataset):
-    def __init__(self, lmdb_path, data_length = np.inf):
+    def __init__(self, lmdb_path, start_index, end_index):
         self.env = lmdb.open(lmdb_path, readonly=True, lock=False, max_readers=8, readahead=False, meminit=False)
         self.txn = self.env.begin(write=False)
-        self.data_length = data_length        
+        self.start_index = start_index
+        self.end_index = end_index         
 
     def __len__(self):
-        return self.data_length
+        return self.end_index - self.start_index + 1
 
     def __del__(self):
         self.txn.commit() 
         self.env.close()  
 
     def __getitem__(self, index):        
-        data_id = convert_index_to_id(index)
+        data_id = convert_index_to_id(index + self.start_index)
         image_key, annotation_key = f'image_{data_id}'.encode('utf-8'), f'annotation_{data_id}'.encode('utf-8')
     
         image_data = self.txn.get(image_key)
