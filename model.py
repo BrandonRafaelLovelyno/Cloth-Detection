@@ -3,12 +3,12 @@ import torchvision
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
-class FasterRCNNResNet101(torch.nn.Module):
+class FasterRCNNResNet50(torch.nn.Module):
     def __init__(self, num_classes=14):
-        super(FasterRCNNResNet101, self).__init__()
+        super(FasterRCNNResNet50, self).__init__()
         
         # Backbone with FPN
-        backbone = resnet_fpn_backbone('resnet101', weights=torchvision.models.ResNet101_Weights.IMAGENET1K_V2)
+        backbone = resnet_fpn_backbone('resnet50', weights=torchvision.models.ResNet50_Weights.IMAGENET1K_V2)
         
         # Freeze early layers to focus on fine-tuning higher-level features
         for i, layer in enumerate(backbone.body.children()):

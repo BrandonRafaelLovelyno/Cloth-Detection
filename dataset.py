@@ -36,7 +36,7 @@ def extract_attribute(anno,key):
     
     return attributes
 
-class DeepFashion2Dataset(torch.utils.data.Dataset):
+class LMDBDataset(torch.utils.data.Dataset):
     def __init__(self, lmdb_path, start_index, end_index):
         self.env = lmdb.open(lmdb_path, readonly=True, lock=False, max_readers=8, readahead=False, meminit=False)
         self.txn = self.env.begin(write=False)

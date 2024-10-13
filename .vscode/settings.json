@@ -1,8 +1,7 @@
 {
     "python.analysis.extraPaths": [
         "./helper",
-        "./model",
         "./helper/draw",
-        "./dataset"
+        "./config"
     ]
 }
