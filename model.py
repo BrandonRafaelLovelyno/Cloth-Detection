@@ -4,7 +4,7 @@ from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
 
 class FasterRCNNResNet50(torch.nn.Module):
-    def __init__(self, num_classes=14):
+    def __init__(self, num_classes=14, nms_iou_threshold=0.5, score_threshold=0.05):
         super(FasterRCNNResNet50, self).__init__()
         
         # Backbone with FPN
@@ -19,7 +19,7 @@ class FasterRCNNResNet50(torch.nn.Module):
         # RoI Pooler with modified settings
         roi_pooler = torchvision.ops.MultiScaleRoIAlign(
             featmap_names=["0", "1", "2", "3"],
-            output_size=14,  # Increase to capture more details
+            output_size=14,  
             sampling_ratio=4  # Higher sampling ratio for better feature extraction
         )
 
@@ -34,6 +34,10 @@ class FasterRCNNResNet50(torch.nn.Module):
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
         self.model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
 
+        # Store NMS parameters
+        self.nms_iou_threshold = nms_iou_threshold
+        self.score_threshold = score_threshold
+
     def forward(self, images, targets=None):
         """
         Forward method for the Faster R-CNN model.
@@ -45,4 +49,37 @@ class FasterRCNNResNet50(torch.nn.Module):
         Returns:
             output (Tensor): Model outputs during inference.
         """
-        return self.model(images, targets)
+        # Get the raw predictions from the model
+        outputs = self.model(images, targets)
+        
+        if self.training:
+            # During training, return the raw output (losses)
+            return outputs
+        
+        # Apply NMS during evaluation
+        filtered_outputs = []
+        for output in outputs:
+            boxes = output['boxes']
+            scores = output['scores']
+            labels = output['labels']
+
+            # Filter out low-confidence scores
+            high_score_idx = scores > self.score_threshold
+            boxes = boxes[high_score_idx]
+            scores = scores[high_score_idx]
+            labels = labels[high_score_idx]
+
+            # Apply NMS
+            nms_idx = torchvision.ops.nms(boxes, scores, self.nms_iou_threshold)
+            boxes = boxes[nms_idx]
+            scores = scores[nms_idx]
+            labels = labels[nms_idx]
+
+            # Store the filtered results
+            filtered_outputs.append({
+                'boxes': boxes,
+                'scores': scores,
+                'labels': labels
+            })
+
+        return filtered_outputs
