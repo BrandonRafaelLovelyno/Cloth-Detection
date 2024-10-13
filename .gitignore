@@ -4,6 +4,9 @@ data
 # weights
 weight
 
+# config
+config
+
 # playground
 playground*
 
